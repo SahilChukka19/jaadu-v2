@@ -1,0 +1,44 @@
+{
+    "manifest_version": 3,
+    "name": "Jaadu: Web Co-Pilot",
+    "version": "1.0.0",
+    "description": "2026-era browser co-pilot for summarization, note-taking, and automation.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "contextMenus",
+        "storage",
+        "tabs"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "assets/background.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "assets/content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_title": "Jaadu Home"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "index.html",
+                "assets/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}
