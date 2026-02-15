@@ -45,31 +45,37 @@ const App = () => {
     }
   };
 
+  const BACKEND_URL = "https://jaadu-v2.onrender.com"
   const handleSummarize = async () => {
     setLoading(true);
 
     try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+      chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_PAGE_INFO' }, async (response) => {
+        if (!response) {
+          setLoading(false);
+          return;
+        }
+
+        const pageText = response.fullContent || response.summary;
+
+        const aiResponse = await fetch(`${BACKEND_URL}/ai/summarize`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-extension-key": "217dba50-c0ab-4aee-bc6c-8d745f85b434aa42de4ef06acf3e6de8b7aecf67471e40e50bbb4a270a346c8db2adac5477fc"
+          },
+          body: JSON.stringify({ text: pageText })
+        });
+
+        const data = await aiResponse.json();
+        setSummary(data.result);
+        setLoading(false);
       });
 
-      chrome.tabs.sendMessage(
-        tab.id,
-        { type: 'EXTRACT_PAGE_INFO' },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            setLoading(false);
-            return;
-          }
-
-          if (response) {
-            setSummary(response.summary);
-          }
-          setLoading(false);
-        }
-      );
-    } catch {
+    } catch (err) {
+      console.error("Summarize error:", err);
       setLoading(false);
     }
   };
