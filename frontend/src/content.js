@@ -52,7 +52,7 @@ const injectJaadu = () => {
       cursor: pointer;
       box-shadow: 0 8px 24px rgba(0,0,0,0.25);
       z-index: 2147483647;
-      font-family: -apple-system, system-ui, sans-serif;
+      font-family: 'Nunito', -apple-system, system-ui, sans-serif;
       font-weight: 800;
       font-size: 26px;
       transition: transform 0.25s ease;

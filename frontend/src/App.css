@@ -8,7 +8,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     background: transparent;
     color: #1d1d1f;
     font-size: 14px;
@@ -121,6 +121,74 @@ body {
     white-space: pre-wrap;
 }
 
+/* ── Markdown Renderer ────────────────────────────────────────────────────── */
+.markdown-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1d1d1f;
+}
+
+.markdown-body p {
+    margin-bottom: 10px;
+    white-space: normal;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin: 6px 0 10px 18px;
+}
+
+.markdown-body li {
+    margin-bottom: 4px;
+}
+
+.markdown-body li>ul,
+.markdown-body li>ol {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.markdown-body strong {
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    font-weight: 600;
+    margin: 12px 0 6px;
+    color: #1d1d1f;
+}
+
+.markdown-body h1 {
+    font-size: 16px;
+}
+
+.markdown-body h2 {
+    font-size: 15px;
+}
+
+.markdown-body h3 {
+    font-size: 14px;
+}
+
+.note-markdown p {
+    margin-bottom: 6px;
+}
+
+.note-markdown ul,
+.note-markdown ol {
+    margin-bottom: 6px;
+}
+
+.note-collapsed {
+    max-height: 120px;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 .jaadu-button {
     display: inline-flex;
@@ -154,6 +222,21 @@ body {
     background: #000;
 }
 
+.save-summary-btn {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1d1d1f;
+    font-size: 13px;
+}
+
+.save-summary-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.save-summary-btn.saved {
+    background: rgba(52, 199, 89, 0.12);
+    color: #34c759;
+}
+
 /* ── Textarea ─────────────────────────────────────────────────────────────── */
 .jaadu-textarea {
     width: 100%;
@@ -174,6 +257,31 @@ body {
     border-color: rgba(0, 0, 0, 0.25);
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
 }
+
+/* ── Character Counter ────────────────────────────────────────────────────── */
+.textarea-wrapper {
+    position: relative;
+}
+
+.char-counter {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 11px;
+    color: #aeaeb2;
+    pointer-events: none;
+    font-family: 'Nunito', system-ui, sans-serif;
+}
+
+.char-counter.warn {
+    color: #ff9500;
+}
+
+.char-counter.over {
+    color: #ff3b30;
+    font-weight: 700;
+}
+
 
 /* ── Explain Tab ──────────────────────────────────────────────────────────── */
 .explain-tab {
@@ -340,6 +448,70 @@ body {
 .delete-btn:hover {
     background: rgba(255, 59, 48, 0.1);
     color: #ff3b30;
+}
+
+/* ── Collection ───────────────────────────────────────────────────────────── */
+.collection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.collection-count {
+    font-size: 12px;
+    color: #6e6e73;
+    font-weight: 500;
+}
+
+.clear-all-btn {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #ff3b30;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.clear-all-btn:hover {
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.note-type-badge {
+    font-size: 11px;
+    color: #6e6e73;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #0071e3;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 6px;
+}
+
+.expand-btn:hover {
+    text-decoration: underline;
+}
+
+.note-url {
+    color: #0071e3;
+    font-size: 12px;
+    text-decoration: none;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.note-url:hover {
+    text-decoration: underline;
 }
 
 /* ── Empty State ──────────────────────────────────────────────────────────── */

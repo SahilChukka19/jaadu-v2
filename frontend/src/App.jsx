@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './App.css'
 
 const BACKEND_URL = "https://jaadu-v2.onrender.com";
@@ -28,16 +29,20 @@ const getPageContent = () =>
   });
 
 const App = () => {
-  const [activeTab, setActiveTab] = useState('focus');
+  const [activeTab, setActiveTab] = useState('summarize');
 
-  // Focus / Summarize
+  // Summarize
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryUrl, setSummaryUrl] = useState('');
+  const [summaryTitle, setSummaryTitle] = useState('');
+  const [summarySaved, setSummarySaved] = useState(false);
 
   // Explain
   const [explainInput, setExplainInput] = useState('');
   const [explainResult, setExplainResult] = useState('');
   const [explainLoading, setExplainLoading] = useState(false);
+  const [explainSaved, setExplainSaved] = useState(false);
 
   // Chat
   const [chatMessages, setChatMessages] = useState([]);
@@ -47,18 +52,27 @@ const App = () => {
 
   // Notes / Collection
   const [notes, setNotes] = useState([]);
+  const [expandedNotes, setExpandedNotes] = useState({});
 
   useEffect(() => {
     fetchNotes();
   }, []);
 
-  // Listen for EXPLAIN_SELECTION from background.js
+  // Refresh collection when switching to it
+  useEffect(() => {
+    if (activeTab === 'collection') fetchNotes();
+  }, [activeTab]);
+
+  // Listen for messages from background.js
   useEffect(() => {
     const handler = (message) => {
       if (message.type === 'EXPLAIN_SELECTION' && message.text) {
         setExplainInput(message.text);
         setActiveTab('explain');
         handleExplain(message.text);
+      }
+      if (message.type === 'DATA_UPDATED') {
+        fetchNotes();
       }
     };
     chrome.runtime.onMessage.addListener(handler);
@@ -78,20 +92,41 @@ const App = () => {
   // ── Summarize ──────────────────────────────────────────────────────────────
   const handleSummarize = async () => {
     setSummaryLoading(true);
+    setSummary('');
+    setSummarySaved(false);
     try {
       const [tab] = await new Promise(r => chrome.tabs.query({ active: true, currentWindow: true }, r));
+      setSummaryUrl(tab.url || '');
+      setSummaryTitle(tab.title || '');
       chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_PAGE_INFO' }, async (response) => {
         if (!response) { setSummaryLoading(false); return; }
         const text = response.fullContent || response.summary;
         const data = await apiFetch('/ai/summarize', { text });
         setSummary(data.result);
-        setActiveTab('summary');
         setSummaryLoading(false);
       });
     } catch (err) {
       console.error('Summarize error:', err);
       setSummaryLoading(false);
     }
+  };
+
+  const saveSummary = async () => {
+    const item = {
+      id: Date.now(),
+      type: 'page',
+      content: summary,
+      title: summaryTitle,
+      url: summaryUrl || 'unknown',
+      timestamp: new Date().toISOString(),
+    };
+    const result = await chrome.storage.local.get(['jaadu_data']);
+    const data = result.jaadu_data || [];
+    data.push(item);
+    await chrome.storage.local.set({ jaadu_data: data });
+    fetchNotes();
+    setSummarySaved(true);
+    setTimeout(() => setSummarySaved(false), 2000);
   };
 
   // ── Explain ────────────────────────────────────────────────────────────────
@@ -109,6 +144,28 @@ const App = () => {
     } finally {
       setExplainLoading(false);
     }
+  };
+
+  const saveExplanation = async () => {
+    const item = {
+      id: Date.now(),
+      type: 'note',
+      content: `**Input:**\n${explainInput}\n\n**Explanation:**\n${explainResult}`,
+      url: 'unknown',
+      timestamp: new Date().toISOString(),
+    };
+    // Try to attach current page URL
+    try {
+      const [tab] = await new Promise(r => chrome.tabs.query({ active: true, currentWindow: true }, r));
+      if (tab?.url) item.url = tab.url;
+    } catch { /* ignore */ }
+    const result = await chrome.storage.local.get(['jaadu_data']);
+    const data = result.jaadu_data || [];
+    data.push(item);
+    await chrome.storage.local.set({ jaadu_data: data });
+    fetchNotes();
+    setExplainSaved(true);
+    setTimeout(() => setExplainSaved(false), 2000);
   };
 
   // ── Chat ───────────────────────────────────────────────────────────────────
@@ -146,6 +203,16 @@ const App = () => {
     setNotes(updated);
   };
 
+  const clearAllNotes = async () => {
+    await chrome.storage.local.set({ jaadu_data: [] });
+    setNotes([]);
+    setExpandedNotes({});
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedNotes(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="jaadu-container">
@@ -154,7 +221,7 @@ const App = () => {
       </header>
 
       <nav className="jaadu-tabs">
-        {['focus', 'summary', 'explain', 'chat', 'collection'].map(tab => (
+        {['summarize', 'explain', 'chat', 'collection'].map(tab => (
           <button
             key={tab}
             className={activeTab === tab ? 'active' : ''}
@@ -167,8 +234,8 @@ const App = () => {
 
       <main className="jaadu-main">
 
-        {/* ── FOCUS ── */}
-        {activeTab === 'focus' && (
+        {/* ── SUMMARIZE ── */}
+        {activeTab === 'summarize' && (
           <div className="tab-content">
             <button
               className="jaadu-button primary"
@@ -177,20 +244,29 @@ const App = () => {
             >
               {summaryLoading ? 'Analyzing page...' : 'Summarize Current Page'}
             </button>
-          </div>
-        )}
-
-        {/* ── SUMMARY ── */}
-        {activeTab === 'summary' && (
-          <div className="tab-content">
-            {summary ? (
+            {summaryLoading && (
+              <div className="empty-state">Reading page content...</div>
+            )}
+            {summary && !summaryLoading && (
               <div className="jaadu-card summary-card">
                 <h3>Summary</h3>
-                <p>{summary}</p>
+                <div className="markdown-body">
+                  <ReactMarkdown>{summary}</ReactMarkdown>
+                </div>
               </div>
-            ) : (
+            )}
+            {summary && !summaryLoading && (
+              <button
+                className={`jaadu-button save-summary-btn ${summarySaved ? 'saved' : ''}`}
+                onClick={saveSummary}
+                disabled={summarySaved}
+              >
+                {summarySaved ? 'Saved to Collection ✓' : 'Save to Collection'}
+              </button>
+            )}
+            {!summary && !summaryLoading && (
               <div className="empty-state">
-                Click "Summarize" from the Focus tab.
+                Click the button above to summarize the current page.
               </div>
             )}
           </div>
@@ -199,25 +275,43 @@ const App = () => {
         {/* ── EXPLAIN ── */}
         {activeTab === 'explain' && (
           <div className="tab-content explain-tab">
-            <textarea
-              className="jaadu-textarea"
-              placeholder="Paste or type text to explain..."
-              value={explainInput}
-              onChange={e => setExplainInput(e.target.value)}
-              rows={5}
-            />
+            <div className="textarea-wrapper">
+              <textarea
+                className="jaadu-textarea"
+                placeholder="Paste or type text to explain..."
+                value={explainInput}
+                onChange={e => {
+                  if (e.target.value.length <= 3000) setExplainInput(e.target.value);
+                }}
+                rows={5}
+              />
+              <span className={`char-counter ${explainInput.length > 2400 ? 'warn' : ''} ${explainInput.length >= 3000 ? 'over' : ''}`}>
+                {explainInput.length} / 3000
+              </span>
+            </div>
             <button
               className="jaadu-button primary"
               onClick={() => handleExplain()}
-              disabled={explainLoading || !explainInput.trim()}
+              disabled={explainLoading || !explainInput.trim() || explainInput.length > 3000}
             >
               {explainLoading ? 'Explaining...' : 'Explain'}
             </button>
             {explainResult && (
               <div className="jaadu-card result-card">
                 <h3>Explanation</h3>
-                <p>{explainResult}</p>
+                <div className="markdown-body">
+                  <ReactMarkdown>{explainResult}</ReactMarkdown>
+                </div>
               </div>
+            )}
+            {explainResult && (
+              <button
+                className={`jaadu-button save-summary-btn ${explainSaved ? 'saved' : ''}`}
+                onClick={saveExplanation}
+                disabled={explainSaved}
+              >
+                {explainSaved ? 'Saved to Collection ✓' : 'Save to Collection'}
+              </button>
             )}
             {!explainResult && !explainLoading && (
               <div className="empty-state">
@@ -273,18 +367,41 @@ const App = () => {
         {activeTab === 'collection' && (
           <div className="tab-content">
             {notes.length === 0 ? (
-              <div className="empty-state">Your collection is empty.</div>
+              <div className="empty-state">Your collection is empty.<br />Right-click on any page to save notes.</div>
             ) : (
-              notes.map(note => (
-                <div key={note.id} className="jaadu-card note-card">
-                  <p className="note-content">{note.content || note.summary}</p>
-                  <div className="note-meta">
-                    <span>{new URL(note.url).hostname}</span>
-                    <span>{new Date(note.timestamp).toLocaleDateString()}</span>
-                    <button className="delete-btn" onClick={() => deleteNote(note.id)}>✕</button>
-                  </div>
+              <>
+                <div className="collection-header">
+                  <span className="collection-count">{notes.length} item{notes.length !== 1 ? 's' : ''}</span>
+                  <button className="clear-all-btn" onClick={clearAllNotes}>Clear all</button>
                 </div>
-              ))
+                {[...notes].reverse().map(note => {
+                  const content = note.content || note.summary || '';
+                  const isLong = content.length > 160;
+                  const isExpanded = expandedNotes[note.id];
+                  let hostname = '';
+                  try { hostname = new URL(note.url).hostname; } catch { }
+                  return (
+                    <div key={note.id} className="jaadu-card note-card">
+                      <div className="note-type-badge">{note.type === 'page' ? '📄 Page' : '📝 Note'}</div>
+                      <div className={`markdown-body note-markdown ${isLong && !isExpanded ? 'note-collapsed' : ''}`}>
+                        <ReactMarkdown>{content}</ReactMarkdown>
+                      </div>
+                      {isLong && (
+                        <button className="expand-btn" onClick={() => toggleExpand(note.id)}>
+                          {isExpanded ? 'Show less' : 'Show more'}
+                        </button>
+                      )}
+                      <div className="note-meta">
+                        {hostname && (
+                          <a href={note.url} target="_blank" rel="noopener" className="note-url">{hostname}</a>
+                        )}
+                        <span>{new Date(note.timestamp).toLocaleDateString()}</span>
+                        <button className="delete-btn" onClick={() => deleteNote(note.id)}>✕</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
             )}
           </div>
         )}

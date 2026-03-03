@@ -16,8 +16,7 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EXTENSION_API_KEY = os.getenv("EXTENSION_API_KEY")
-ALLOWED_EXTENSION_ID = os.getenv("ALLOWED_EXTENSION_ID", "")  # e.g. "abcdefghijklmnopabcdefghijklmnop"
-
+ALLOWED_EXTENSION_ID = os.getenv("ALLOWED_EXTENSION_ID", "")  
 if not GEMINI_API_KEY:
     raise ValueError("Missing GEMINI_API_KEY")
 
@@ -50,6 +49,10 @@ app.add_middleware(
 
 class TextRequest(BaseModel):
     text: str = Field(..., max_length=8000)
+
+
+class ExplainRequest(BaseModel):
+    text: str = Field(..., max_length=3000)  # ~500 words — keeps costs low
 
 
 class ChatRequest(BaseModel):
@@ -96,7 +99,7 @@ def summarize(request: Request, req: TextRequest, _: None = Depends(verify_exten
 # Explain endpoint
 @app.post("/ai/explain")
 @limiter.limit("20/minute")
-def explain(request: Request, req: TextRequest, _: None = Depends(verify_extension_key)):
+def explain(request: Request, req: ExplainRequest, _: None = Depends(verify_extension_key)):
     try:
         prompt = f"Explain this in simple, clear language:\n\n{req.text}"
         response = model.generate_content(prompt)
