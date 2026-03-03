@@ -16,6 +16,7 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EXTENSION_API_KEY = os.getenv("EXTENSION_API_KEY")
+ALLOWED_EXTENSION_ID = os.getenv("ALLOWED_EXTENSION_ID", "")  # e.g. "abcdefghijklmnopabcdefghijklmnop"
 
 if not GEMINI_API_KEY:
     raise ValueError("Missing GEMINI_API_KEY")
@@ -57,6 +58,18 @@ class ChatRequest(BaseModel):
 
 
 def verify_extension_key(request: Request):
+    # 1. Must come from a Chrome extension origin
+    origin = request.headers.get("origin", "")
+    if not origin.startswith("chrome-extension://"):
+        raise HTTPException(status_code=403, detail="Unauthorized origin")
+
+    # 2. If a specific extension ID is configured, enforce it
+    if ALLOWED_EXTENSION_ID:
+        expected_origin = f"chrome-extension://{ALLOWED_EXTENSION_ID}"
+        if origin != expected_origin:
+            raise HTTPException(status_code=403, detail="Unauthorized extension")
+
+    # 3. Shared secret key check
     key = request.headers.get("x-extension-key")
     if key != EXTENSION_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized")

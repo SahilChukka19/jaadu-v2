@@ -1,337 +1,365 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-
-:root {
-  --bg-color: #F8F9FA;
-  --card-bg: #FFFFFF;
-  --text-main: #1D1D1F;
-  --text-muted: #6E6E73;
-  --accent-color: #0071EE;
-  --accent-soft: #EBF5FF;
-  --border-color: #E5E5E7;
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.04);
-  --radius-xl: 24px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-html,
 body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: transparent;
-  /* Essential for glassmorphism */
-  font-family: 'Outfit', -apple-system, sans-serif;
-  color: var(--text-main);
-  letter-spacing: -0.01em;
-  /* Centering Magic */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    background: transparent;
+    color: #1d1d1f;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-* {
-  box-sizing: border-box;
-}
-
+/* ── Layout ───────────────────────────────────────────────────────────────── */
 .jaadu-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  /* Remove padding from here, let safe-zone handle it */
-  padding: 0;
-  overflow: hidden;
-  background-color: transparent;
-}
-
-/* Wrapper to strictly contain content away from edges */
-.jaadu-safe-zone {
-  width: 380px;
-  /* Fixed width, ensuring buffers on 450px iframe */
-  height: 100%;
-  max-height: 100%;
-  margin: 0 auto;
-  padding: 24px 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
-  /* Scroll INSIDE the safe zone */
-  scrollbar-width: none;
-}
-
-.jaadu-container::-webkit-scrollbar {
-  display: none;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(24px) saturate(180%);
+    overflow: hidden;
 }
 
 .jaadu-header {
-  text-align: center;
-  /* Center header text */
-  margin-bottom: 24px;
-  padding: 0 4px;
-  /* Tiny internal buffer */
-  width: 100%;
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
 }
 
 .jaadu-logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--text-main);
-  margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #1d1d1f;
 }
 
-.jaadu-tagline {
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  margin-top: 2px;
-  font-weight: 400;
-}
-
-.jaadu-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  min-width: 0;
-}
-
-.jaadu-action-zone {
-  position: sticky;
-  top: -16px;
-  /* Offset container padding */
-  background: var(--bg-color);
-  padding: 8px 0;
-  z-index: 10;
-  margin-bottom: 4px;
-  width: 100%;
-}
-
-.jaadu-button {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: var(--radius-lg);
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  white-space: normal;
-  /* Allow text to wrap if button is too narrow */
-  text-align: center;
-  word-break: break-all;
-}
-
-.jaadu-button.primary {
-  background: var(--text-main);
-  color: white;
-}
-
-.jaadu-button.primary:hover {
-  background: #333333;
-  transform: scale(1.02);
-}
-
-.jaadu-button.primary:active {
-  transform: scale(0.98);
-}
-
-.jaadu-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.jaadu-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  /* Reduced from 20px */
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.2s ease;
-  width: 100%;
-  max-width: 100%;
-}
-
-.summary-card {
-  background: var(--accent-soft);
-  border-color: transparent;
-}
-
-.summary-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--accent-color);
-}
-
-.summary-card p {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--text-main);
-  margin: 0;
-  word-wrap: break-word;
-}
-
-.jaadu-notes-section h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-}
-
-.jaadu-notes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.note-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.note-content {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.note-meta {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 8px;
-  border-top: 1px solid #F0F0F0;
-}
-
-.media-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--accent-color);
-  color: white;
-  border-color: transparent;
-  padding: 12px 16px;
-  border-radius: var(--radius-lg);
-}
-
-.media-info {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-  /* Ensure ellipsis works */
-}
-
-.media-label {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  opacity: 0.8;
-  margin-bottom: 4px;
-}
-
-.media-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.media-control {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease;
-}
-
-.media-control:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.jaadu-footer {
-  text-align: center;
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
 .jaadu-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 0 12px 12px;
+    display: flex;
+    padding: 8px 10px 0;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.jaadu-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .jaadu-tabs button {
-  flex: 1;
-  border: none;
-  padding: 8px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    padding: 7px 14px;
+    border: none;
+    background: transparent;
+    color: #6e6e73;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, background 0.15s;
+}
+
+.jaadu-tabs button:hover {
+    color: #1d1d1f;
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .jaadu-tabs button.active {
-  background: var(--accent-soft);
-  color: var(--accent-color);
+    color: #1d1d1f;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Main ─────────────────────────────────────────────────────────────────── */
+.jaadu-main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .tab-content {
-  animation: fadeIn 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* ── Cards ────────────────────────────────────────────────────────────────── */
 .jaadu-card {
-  animation: fadeIn 0.4s ease-out;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.jaadu-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6e6e73;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.jaadu-card p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1d1d1f;
+    white-space: pre-wrap;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.jaadu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s;
+    width: 100%;
+}
+
+.jaadu-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.jaadu-button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.jaadu-button.primary {
+    background: #1d1d1f;
+    color: white;
+}
+
+.jaadu-button.primary:hover:not(:disabled) {
+    background: #000;
+}
+
+/* ── Textarea ─────────────────────────────────────────────────────────────── */
+.jaadu-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1d1d1f;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.jaadu-textarea:focus {
+    border-color: rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Explain Tab ──────────────────────────────────────────────────────────── */
+.explain-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.result-card {
+    animation: fadeIn 0.25s ease;
+}
+
+/* ── Chat Tab ─────────────────────────────────────────────────────────────── */
+.chat-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 !important;
+    height: 100%;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+.chat-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: fadeIn 0.2s ease;
+}
+
+.chat-bubble p {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.chat-bubble.user {
+    align-self: flex-end;
+    background: #1d1d1f;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.assistant {
+    align-self: flex-start;
+    background: rgba(0, 0, 0, 0.06);
+    color: #1d1d1f;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-bubble.loading {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 16px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    background: #6e6e73;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.2s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.7);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+}
+
+.chat-input {
+    flex: 1;
+    margin: 0;
+}
+
+.send-btn {
+    width: 40px !important;
+    height: 40px;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: #1d1d1f !important;
+    color: white !important;
+    font-size: 18px !important;
+    flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+    background: #000 !important;
+}
+
+/* ── Note Card ────────────────────────────────────────────────────────────── */
+.note-card {
+    position: relative;
+}
+
+.note-content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1d1d1f;
+    margin-bottom: 8px;
+}
+
+.note-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #6e6e73;
+    flex-wrap: wrap;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: #6e6e73;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
+}
+
+/* ── Empty State ──────────────────────────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    color: #6e6e73;
+    font-size: 14px;
+    padding: 32px 16px;
+    line-height: 1.6;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

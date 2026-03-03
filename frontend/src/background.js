@@ -64,50 +64,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
 });
 
-// Media Control Logic
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "GET_MEDIA_STATE") {
-        detectMedia().then(sendResponse);
-        return true;
-    } else if (message.type === "TOGGLE_MEDIA") {
-        toggleMedia(message.tabId).then(sendResponse);
-        return true;
-    }
-});
 
-async function detectMedia() {
-    const tabs = await chrome.tabs.query({ url: ["*://*.youtube.com/*", "*://*.spotify.com/*"] });
-    if (tabs.length === 0) return null;
-
-    // Find the first tab that is actually playing (if possible)
-    // For now, just return the first one found
-    const mediaTab = tabs[0];
-    return {
-        tabId: mediaTab.id,
-        title: mediaTab.title,
-        url: mediaTab.url,
-        isPlaying: mediaTab.audible
-    };
-}
-
-async function toggleMedia(tabId) {
-    try {
-        await chrome.scripting.executeScript({
-            target: { tabId: tabId },
-            func: () => {
-                const video = document.querySelector('video');
-                if (video) {
-                    if (video.paused) video.play();
-                    else video.pause();
-                }
-            }
-        });
-        return { success: true };
-    } catch (e) {
-        console.error("Media toggle failed:", e);
-        return { success: false };
-    }
-}
 
 async function saveToJaadu(data) {
     const result = await chrome.storage.local.get(["jaadu_data"]);
