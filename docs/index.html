@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jaadu — Web Co-Pilot</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+        }
+
+        .container {
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .tagline {
+            font-size: 20px;
+            color: #6e6e73;
+            margin-bottom: 48px;
+        }
+
+        .description {
+            background: #fff;
+            border: 1px solid #e5e5ea;
+            border-radius: 18px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            text-align: left;
+            line-height: 1.7;
+            color: #3a3a3c;
+        }
+
+        .description h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1d1d1f;
+        }
+
+        .description ul {
+            margin-left: 18px;
+        }
+
+        .description ul li {
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .links a {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+
+        .links a:hover {
+            opacity: 0.75;
+        }
+
+        .btn-primary {
+            background: #1d1d1f;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #1d1d1f;
+            border: 1px solid #e5e5ea;
+        }
+
+        footer {
+            margin-top: 40px;
+            color: #6e6e73;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">Jaadu</div>
+        <p class="tagline">Your AI-powered Web Co-Pilot</p>
+
+        <div class="description">
+            <h2>What Jaadu does</h2>
+            <ul>
+                <li>Summarize any web page in seconds</li>
+                <li>Explain selected text in plain language</li>
+                <li>Chat with any page using AI</li>
+                <li>Save and organize notes from the web</li>
+            </ul>
+        </div>
+
+        <div class="links">
+            <a class="btn-primary" href="https://github.com/SahilChukka19/jaadu-v2" target="_blank" rel="noopener">View
+                on GitHub</a>
+            <a class="btn-secondary" href="privacy.html">Privacy Policy</a>
+            <a class="btn-secondary" href="terms.html">Terms of Service</a>
+        </div>
+
+        <footer>
+            <p>Made with ♥ &nbsp;·&nbsp; <a href="privacy.html" style="color:#6e6e73">Privacy</a> &nbsp;·&nbsp; <a
+                    href="terms.html" style="color:#6e6e73">Terms</a></p>
+        </footer>
+    </div>
+</body>
+
+</html>
