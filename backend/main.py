@@ -25,7 +25,7 @@ if not EXTENSION_API_KEY:
     raise ValueError("Missing EXTENSION_API_KEY")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-2.5-flash"
 
 app = FastAPI()
 
