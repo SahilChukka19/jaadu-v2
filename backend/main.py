@@ -1,10 +1,10 @@
 import os
+import logging
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -12,8 +12,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from fastapi.responses import JSONResponse
 
-# Load environment variables
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EXTENSION_API_KEY = os.getenv("EXTENSION_API_KEY")
@@ -29,7 +31,6 @@ MODEL = "gemini-2.5-flash"
 
 app = FastAPI()
 
-# Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, lambda r, e: JSONResponse(
@@ -54,13 +55,11 @@ class TextRequest(BaseModel):
 
 class ExplainRequest(BaseModel):
     text: str = Field(..., max_length=3000)  # ~500 words — keeps costs low
-    use_search: bool = False
 
 
 class ChatRequest(BaseModel):
     question: str = Field(..., max_length=1000)
     context: str = Field(..., max_length=8000)
-    use_search: bool = False
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -82,24 +81,12 @@ def verify_extension_key(request: Request):
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-def generate(prompt: str, use_search: bool = False) -> str:
+def generate(prompt: str) -> str:
     try:
-        if use_search:
-            config = types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())]
-            )
-            response = client.models.generate_content(
-                model=MODEL, contents=prompt, config=config,
-            )
-        else:
-            response = client.models.generate_content(
-                model=MODEL, contents=prompt,
-            )
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+        )
         return response.text
     except Exception as e:
         logger.exception("generate() failed: %s", e)
@@ -127,22 +114,15 @@ def summarize(request: Request, req: TextRequest, _: None = Depends(verify_exten
 @limiter.limit("20/minute")
 def explain(request: Request, req: ExplainRequest, _: None = Depends(verify_extension_key)):
     try:
-        if req.use_search:
-            prompt = (
-                "Search the web to find accurate, up-to-date information and explain "
-                "the following in simple, clear language. Cite your sources.\n\n"
-                f"{req.text}"
-            )
-        else:
-            prompt = (
-                "Explain the following text in simple, clear language. "
-                "Base your explanation ONLY on the text provided below. "
-                "Do NOT add facts, names, or details that are not present in the text. "
-                "If the text is too vague or doesn't contain enough information to explain, "
-                "say so honestly instead of guessing.\n\n"
-                f"Text to explain:\n{req.text}"
-            )
-        return {"result": generate(prompt, use_search=req.use_search)}
+        prompt = (
+            "Explain the following text in simple, clear language. "
+            "Base your explanation ONLY on the text provided below. "
+            "Do NOT add facts, names, or details that are not present in the text. "
+            "If the text is too vague or doesn't contain enough information to explain, "
+            "say so honestly instead of guessing.\n\n"
+            f"Text to explain:\n{req.text}"
+        )
+        return {"result": generate(prompt)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -151,19 +131,7 @@ def explain(request: Request, req: ExplainRequest, _: None = Depends(verify_exte
 @limiter.limit("20/minute")
 def chat(request: Request, req: ChatRequest, _: None = Depends(verify_extension_key)):
     try:
-        if req.use_search:
-            prompt = f"""You are a helpful assistant. The user is currently on a webpage.
-Search the web for additional context if needed to give the best answer.
-
-Page content:
-{req.context}
-
-User question:
-{req.question}
-
-Answer clearly and concisely, citing sources where relevant."""
-        else:
-            prompt = f"""You are a helpful assistant answering questions about a webpage.
+        prompt = f"""You are a helpful assistant answering questions about a webpage.
 
 Page content:
 {req.context}
@@ -172,6 +140,6 @@ User question:
 {req.question}
 
 Answer clearly and concisely."""
-        return {"result": generate(prompt, use_search=req.use_search)}
+        return {"result": generate(prompt)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

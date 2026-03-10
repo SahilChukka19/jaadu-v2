@@ -43,14 +43,11 @@ const App = () => {
   const [explainResult, setExplainResult] = useState('');
   const [explainLoading, setExplainLoading] = useState(false);
   const [explainSaved, setExplainSaved] = useState(false);
-  const [explainUseSearch, setExplainUseSearch] = useState(false);
-  const [explainSearched, setExplainSearched] = useState(false);
 
   // Chat
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  const [chatUseSearch, setChatUseSearch] = useState(false);
   const chatEndRef = useRef(null);
 
   // Notes / Collection
@@ -138,11 +135,9 @@ const App = () => {
     if (!text.trim()) return;
     setExplainLoading(true);
     setExplainResult('');
-    setExplainSearched(false);
     try {
-      const data = await apiFetch('/ai/explain', { text, use_search: explainUseSearch });
+      const data = await apiFetch('/ai/explain', { text });
       setExplainResult(data.result);
-      setExplainSearched(explainUseSearch);
     } catch (err) {
       console.error('Explain error:', err);
       setExplainResult('Something went wrong. Please try again.');
@@ -184,8 +179,8 @@ const App = () => {
 
     try {
       const context = await getPageContent() || 'No page content available.';
-      const data = await apiFetch('/ai/chat', { question, context, use_search: chatUseSearch });
-      setChatMessages(prev => [...prev, { role: 'assistant', text: data.result, searched: chatUseSearch }]);
+      const data = await apiFetch('/ai/chat', { question, context });
+      setChatMessages(prev => [...prev, { role: 'assistant', text: data.result }]);
     } catch (err) {
       console.error('Chat error:', err);
       setChatMessages(prev => [...prev, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
@@ -294,25 +289,16 @@ const App = () => {
                 {explainInput.length} / 3000
               </span>
             </div>
-            <div className="explain-actions">
-              <button
-                className={`jaadu-button search-toggle-btn ${explainUseSearch ? 'active' : ''}`}
-                onClick={() => setExplainUseSearch(v => !v)}
-                title={explainUseSearch ? 'Web search ON — click to turn off' : 'Turn on web search'}
-              >
-                🔍 {explainUseSearch ? 'Search: On' : 'Search: Off'}
-              </button>
-              <button
-                className="jaadu-button primary"
-                onClick={() => handleExplain()}
-                disabled={explainLoading || !explainInput.trim() || explainInput.length > 3000}
-              >
-                {explainLoading ? 'Explaining...' : 'Explain'}
-              </button>
-            </div>
+            <button
+              className="jaadu-button primary"
+              onClick={() => handleExplain()}
+              disabled={explainLoading || !explainInput.trim() || explainInput.length > 3000}
+            >
+              {explainLoading ? 'Explaining...' : 'Explain'}
+            </button>
             {explainResult && (
               <div className="jaadu-card result-card">
-                <h3>Explanation {explainSearched && <span className="search-badge">🔍 Web</span>}</h3>
+                <h3>Explanation</h3>
                 <div className="markdown-body">
                   <ReactMarkdown>{explainResult}</ReactMarkdown>
                 </div>
@@ -346,7 +332,6 @@ const App = () => {
               )}
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`chat-bubble ${msg.role}`}>
-                  {msg.searched && <span className="search-badge">🔍 Web</span>}
                   <p>{msg.text}</p>
                 </div>
               ))}
@@ -358,13 +343,6 @@ const App = () => {
               <div ref={chatEndRef} />
             </div>
             <div className="chat-input-row">
-              <button
-                className={`jaadu-button search-toggle-btn chat-search-btn ${chatUseSearch ? 'active' : ''}`}
-                onClick={() => setChatUseSearch(v => !v)}
-                title={chatUseSearch ? 'Web search ON' : 'Turn on web search'}
-              >
-                🔍
-              </button>
               <textarea
                 className="jaadu-textarea chat-input"
                 placeholder="Ask about this page..."
