@@ -82,16 +82,28 @@ def verify_extension_key(request: Request):
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 def generate(prompt: str, use_search: bool = False) -> str:
-    config = types.GenerateContentConfig(
-        tools=[types.Tool(google_search=types.GoogleSearch())] if use_search else []
-    )
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=config,
-    )
-    return response.text
+    try:
+        if use_search:
+            config = types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())]
+            )
+            response = client.models.generate_content(
+                model=MODEL, contents=prompt, config=config,
+            )
+        else:
+            response = client.models.generate_content(
+                model=MODEL, contents=prompt,
+            )
+        return response.text
+    except Exception as e:
+        logger.exception("generate() failed: %s", e)
+        raise
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
