@@ -116,9 +116,20 @@ def summarize(request: Request, req: TextRequest, _: None = Depends(verify_exten
 def explain(request: Request, req: ExplainRequest, _: None = Depends(verify_extension_key)):
     try:
         if req.use_search:
-            prompt = f"Search the web and explain the following in simple, clear language with relevant up-to-date context:\n\n{req.text}"
+            prompt = (
+                "Search the web to find accurate, up-to-date information and explain "
+                "the following in simple, clear language. Cite your sources.\n\n"
+                f"{req.text}"
+            )
         else:
-            prompt = f"Explain this in simple, clear language:\n\n{req.text}"
+            prompt = (
+                "Explain the following text in simple, clear language. "
+                "Base your explanation ONLY on the text provided below. "
+                "Do NOT add facts, names, or details that are not present in the text. "
+                "If the text is too vague or doesn't contain enough information to explain, "
+                "say so honestly instead of guessing.\n\n"
+                f"Text to explain:\n{req.text}"
+            )
         return {"result": generate(prompt, use_search=req.use_search)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
