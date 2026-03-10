@@ -83,14 +83,20 @@ def verify_extension_key(request: Request):
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 def generate(prompt: str, use_search: bool = False) -> str:
-    config = types.GenerateContentConfig(
-        tools=[types.Tool(google_search=types.GoogleSearch())] if use_search else []
-    )
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=config,
-    )
+    if use_search:
+        config = types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())]
+        )
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+            config=config,
+        )
+    else:
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt,
+        )
     return response.text
 
 
