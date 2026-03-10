@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -14,6 +15,9 @@ from fastapi.responses import JSONResponse
 
 # Load environment variables
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EXTENSION_API_KEY = os.getenv("EXTENSION_API_KEY")
@@ -83,21 +87,26 @@ def verify_extension_key(request: Request):
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 def generate(prompt: str, use_search: bool = False) -> str:
-    if use_search:
-        config = types.GenerateContentConfig(
-            tools=[types.Tool(google_search=types.GoogleSearch())]
-        )
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config=config,
-        )
-    else:
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-        )
-    return response.text
+    try:
+        if use_search:
+            config = types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())]
+            )
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config=config,
+            )
+        else:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+            )
+        return response.text
+    except Exception as e:
+        logger.exception("generate() failed: %s", e)
+        raise
+
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
