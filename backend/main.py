@@ -3,7 +3,8 @@ from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -16,15 +17,15 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 EXTENSION_API_KEY = os.getenv("EXTENSION_API_KEY")
-ALLOWED_EXTENSION_ID = os.getenv("ALLOWED_EXTENSION_ID", "")  
+ALLOWED_EXTENSION_ID = os.getenv("ALLOWED_EXTENSION_ID", "")
+
 if not GEMINI_API_KEY:
     raise ValueError("Missing GEMINI_API_KEY")
-
 if not EXTENSION_API_KEY:
     raise ValueError("Missing EXTENSION_API_KEY")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.5-flash")
+client = genai.Client(api_key=GEMINI_API_KEY)
+MODEL = "gemini-2.0-flash"
 
 app = FastAPI()
 
@@ -37,15 +38,15 @@ app.add_exception_handler(RateLimitExceeded, lambda r, e: JSONResponse(
 ))
 app.add_middleware(SlowAPIMiddleware)
 
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ── Pydantic models ───────────────────────────────────────────────────────────
 
 class TextRequest(BaseModel):
     text: str = Field(..., max_length=8000)
@@ -53,68 +54,83 @@ class TextRequest(BaseModel):
 
 class ExplainRequest(BaseModel):
     text: str = Field(..., max_length=3000)  # ~500 words — keeps costs low
+    use_search: bool = False
 
 
 class ChatRequest(BaseModel):
     question: str = Field(..., max_length=1000)
     context: str = Field(..., max_length=8000)
+    use_search: bool = False
 
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
 
 def verify_extension_key(request: Request):
-    # 1. Must come from a Chrome extension origin
     origin = request.headers.get("origin", "")
     if not origin.startswith("chrome-extension://"):
         raise HTTPException(status_code=403, detail="Unauthorized origin")
 
-    # 2. If a specific extension ID is configured, enforce it
     if ALLOWED_EXTENSION_ID:
         expected_origin = f"chrome-extension://{ALLOWED_EXTENSION_ID}"
         if origin != expected_origin:
             raise HTTPException(status_code=403, detail="Unauthorized extension")
 
-    # 3. Shared secret key check
     key = request.headers.get("x-extension-key")
     if key != EXTENSION_API_KEY:
         raise HTTPException(status_code=403, detail="Unauthorized")
 
 
-# Health check
+# ── Helper ────────────────────────────────────────────────────────────────────
+
+def generate(prompt: str, use_search: bool = False) -> str:
+    config = types.GenerateContentConfig(
+        tools=[types.Tool(google_search=types.GoogleSearch())] if use_search else []
+    )
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config=config,
+    )
+    return response.text
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
 @app.get("/")
 def root():
     return {"status": "Jaadu backend running"}
 
 
-# Summarize endpoint
 @app.post("/ai/summarize")
 @limiter.limit("20/minute")
 def summarize(request: Request, req: TextRequest, _: None = Depends(verify_extension_key)):
     try:
         prompt = f"Summarize the following text in clear, concise bullet points:\n\n{req.text}"
-        response = model.generate_content(prompt)
-        return {"result": response.text}
+        return {"result": generate(prompt)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Explain endpoint
 @app.post("/ai/explain")
 @limiter.limit("20/minute")
 def explain(request: Request, req: ExplainRequest, _: None = Depends(verify_extension_key)):
     try:
-        prompt = f"Explain this in simple, clear language:\n\n{req.text}"
-        response = model.generate_content(prompt)
-        return {"result": response.text}
+        if req.use_search:
+            prompt = f"Search the web and explain the following in simple, clear language with relevant up-to-date context:\n\n{req.text}"
+        else:
+            prompt = f"Explain this in simple, clear language:\n\n{req.text}"
+        return {"result": generate(prompt, use_search=req.use_search)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Chat endpoint
 @app.post("/ai/chat")
 @limiter.limit("20/minute")
 def chat(request: Request, req: ChatRequest, _: None = Depends(verify_extension_key)):
     try:
-        prompt = f"""
-You are a helpful assistant answering questions about a webpage.
+        if req.use_search:
+            prompt = f"""You are a helpful assistant. The user is currently on a webpage.
+Search the web for additional context if needed to give the best answer.
 
 Page content:
 {req.context}
@@ -122,9 +138,17 @@ Page content:
 User question:
 {req.question}
 
-Answer clearly and concisely.
-"""
-        response = model.generate_content(prompt)
-        return {"result": response.text}
+Answer clearly and concisely, citing sources where relevant."""
+        else:
+            prompt = f"""You are a helpful assistant answering questions about a webpage.
+
+Page content:
+{req.context}
+
+User question:
+{req.question}
+
+Answer clearly and concisely."""
+        return {"result": generate(prompt, use_search=req.use_search)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
